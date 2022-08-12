@@ -20,7 +20,7 @@ result1:
 result2:
 	mkdir results2 && mv *log results2
 
-result2:
+result3:
 	mkdir results3 && mv *log results3
 
 scalability:	install run result1 run result2 run result3
