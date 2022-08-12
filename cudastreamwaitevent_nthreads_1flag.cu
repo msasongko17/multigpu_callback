@@ -133,21 +133,21 @@ int main(int argc, char *argv[])
         }
 
         cudaSetDevice(0);
-        clock_gettime(CLOCK_MONOTONIC, &start);       /* mark start time */
 #pragma omp parallel num_threads(nthreads)
         {
                 int tid = omp_get_thread_num();
-		cudaSetDevice(tid);
-                if(tid == 0) {	
+                if(tid == 0) {
+			clock_gettime(CLOCK_MONOTONIC, &start);	
 			kernelAdd<<<1, 1, 0, streams[tid]>>>(2, num_d);
 			cudaEventRecord(kernelEvent, streams[tid]);
         		kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, num_1_d);
-        		cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);	
+        		//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);	
                 } else {
+			cudaSetDevice(tid);
 			cudaStreamWaitEvent(streams[tid], kernelEvent,0);
-                	cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
+                	//cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
                 	kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, nums_d[tid-1]);
-                	cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                	//cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                 }
                 cudaStreamSynchronize(streams[tid]);
         }

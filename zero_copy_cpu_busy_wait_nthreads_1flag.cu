@@ -147,24 +147,24 @@ int main(int argc, char *argv[])
                 cudaMalloc(&nums_d[i], sizeof(int));
         }
 
-        cudaSetDevice(0);
-        clock_gettime(CLOCK_MONOTONIC, &start);       /* mark start time */
+	cudaSetDevice(0);
+        //clock_gettime(CLOCK_MONOTONIC, &start);
 #pragma omp parallel num_threads(nthreads)
         {
                 int tid = omp_get_thread_num();
                 if(tid == 0) {
+			clock_gettime(CLOCK_MONOTONIC, &start);
                         kernelAdd<<<1, 1, 0, streams[tid]>>>(2, num_d, num_1_d, nthreads, *cpu_flag_pointer);
-                        fprintf(stderr, "after kernelAdd in thread %d\n", tid);
-                        cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        //cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                         //cudaEventRecord(kernelEvent[0], streams[0]);
                 } else {
-                        cudaSetDevice(tid);
-                        fprintf(stderr, "before while in thread %d\n", tid);
+                        //fprintf(stderr, "before while in thread %d\n", tid);
+			cudaSetDevice(tid);
                         while(*cpu_flag == 0);
-                        fprintf(stderr, "after while in thread %d\n", tid);
-                        cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
+                        //fprintf(stderr, "after while in thread %d\n", tid);
+                        //cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
                         kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, nums_d[tid-1]);
-                        cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        //cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                 }
                 cudaStreamSynchronize(streams[tid]);
         }
