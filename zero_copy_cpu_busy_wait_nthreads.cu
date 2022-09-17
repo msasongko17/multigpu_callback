@@ -49,12 +49,14 @@ void kernel1(clock_t clock_count, int stream)
         __global__
 void kernelAdd(int inc, int * num, int * mult, int nthreads, int * cpu_flag_pointer)
 {
+#if 0
         clock_t start_clock = clock();
         clock_t clock_offset = 0;
         while (clock_offset < 40000)
         {
                 clock_offset = clock() - start_clock;
         }
+#endif
         *num += inc;
         for(int i = 0; i < nthreads - 1; i++)
                 cpu_flag_pointer[i] = 1;
