@@ -96,19 +96,25 @@ int main(int argc, char* argv[])
 	uint32_t *var1;
 	//uint32_t var1;
 
-	hipHostMalloc((void**)&var1, sizeof(uint32_t), hipHostMallocDefault );
+	hipHostMalloc((void**)&var1, sizeof(uint32_t), hipHostMallocMapped );
 	//ioctl(fd1, SET_MEM_OFFSET, var1);
         //ioctl(fd1, SET_MEM_SIZE, size);
 
 	uint32_t *dev_var;	
 
 	hipHostGetDevicePointer((void **) &dev_var, (void *) var1, 0);
+//#if 0
 	hipLaunchKernelGGL(write_to_array,
                   dim3(1),
                   dim3(1),
                   0, 0,
                   dev_var);
-//#if 0
+//#endif
+#if 0
+	hipLaunchKernel((const void *) write_to_array,   /* compute kernel*/
+                dim3(1), dim3(1), (void **) &dev_var, 0/*dynamic shared*/, 0/*stream*/);
+#endif
+	//#if 0
 	//for(int i = 0; i < 100000000; i++);
 	sleep((long double) 0.00000001);
 	while(*var1 == 0);
