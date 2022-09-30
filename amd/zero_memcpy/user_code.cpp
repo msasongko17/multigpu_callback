@@ -47,6 +47,7 @@ THE SOFTWARE.
 #endif
 
 #include <time.h>
+//#include <sys/cachectl.h>
 
 #define SET_MEM_OFFSET 103
 #define SET_MEM_SIZE 104
@@ -60,7 +61,7 @@ THE SOFTWARE.
 
 using namespace std;
 
-__global__ void write_to_array(volatile uint32_t* var1)
+__global__ void write_to_array(uint32_t* var1)
 {
 #if 0
 	array1[0] = 1;
@@ -69,6 +70,7 @@ __global__ void write_to_array(volatile uint32_t* var1)
 	}
 #endif
 	*var1 = 13;	
+	//atomicAdd(var1, 13);
 
 	//__threadfence();
 }
@@ -96,7 +98,7 @@ int main(int argc, char* argv[])
 	uint32_t *var1;
 	//uint32_t var1;
 
-	hipHostMalloc((void**)&var1, sizeof(uint32_t), hipHostMallocMapped );
+	hipHostMalloc((void**)&var1, sizeof(uint32_t), hipHostMallocMapped /*hipHostMallocCoherent*/);
 	//ioctl(fd1, SET_MEM_OFFSET, var1);
         //ioctl(fd1, SET_MEM_SIZE, size);
 
@@ -116,26 +118,23 @@ int main(int argc, char* argv[])
 #endif
 	//#if 0
 	//for(int i = 0; i < 100000000; i++);
-	sleep((long double) 0.00000001);
-	while(*var1 == 0);
-	cout << "var1: " << *var1 << endl;
 	//sleep((long double) 0.00000001);
-	//ioctl(fd1, CHECK_VAR);
-        //ioctl(fd1, FREE_MEM);
-        close(fd1);
-//#endif	
+//#if 0
+	uint32_t temp = 0;
+//#endif
 #if 0
-	cout << "\noutput: " << endl;
-	for(int i = 0; i < size; i++) {
-		cout << array1[i] << " ";
+	asm volatile("clflush (%0)\n\t"
+                         : 
+                         : "r"(var1)
+                         : "memory");
+#endif
+	while(temp == 0) {
+		asm volatile("mov %1, %0\n\t"
+                 : "=r" (temp)
+                 : "m" (*var1));
 	}
-	cout << endl;
-#endif
-#if 0
-	ioctl(fd1, UPDATE_MEM);
-        ioctl(fd1, FREE_MEM);
+	cout << "var1: " << *var1 << endl;
         close(fd1);
-#endif
 	hipFree(var1);
 	std::cout<<"Passed!\n";
 	return SUCCESS;
