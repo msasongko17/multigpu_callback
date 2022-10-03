@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
                         free(deviceProp);
                         return -1;
                 }
-
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
                 for(int j = 0; j < nthreads; j++) {
                         if(i != j) {
                                 GUARD_CUDACALL2(cudaDeviceEnablePeerAccess(j, 0), "cudaDeviceEnablePeerAccess", __LINE__);
@@ -157,16 +157,16 @@ int main(int argc, char *argv[])
                 if(tid == 0) {
 			clock_gettime(CLOCK_MONOTONIC, &start);
                         kernelAdd<<<1, 1, 0, streams[tid]>>>(2, num_d, num_1_d, nthreads, *cpu_flag_pointer);
-                        //cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                         //cudaEventRecord(kernelEvent[0], streams[0]);
                 } else {
                         //fprintf(stderr, "before while in thread %d\n", tid);
 			cudaSetDevice(tid);
                         while(*cpu_flag == 0);
                         //fprintf(stderr, "after while in thread %d\n", tid);
-                        //cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
+                        cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
                         kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, nums_d[tid-1]);
-                        //cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                 }
                 cudaStreamSynchronize(streams[tid]);
         }
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
                 cudaStreamDestroy(streams[i]);
         }
 
-        cudaSetDevice(0);
+        //cudaSetDevice(0);
 
         for(int i = 0; i < nthreads - 1; i++) {
                 cudaSetDevice(i+1);
@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
                 cudaFree(nums_d[i]);
         }
 
+	cudaSetDevice(0);
         free(nums);
         free(nums_d);
 

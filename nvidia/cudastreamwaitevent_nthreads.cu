@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
                         return -1;
                 }
 //#if 0
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
                 for(int j = 0; j < nthreads; j++) {
                         if(i != j) {
                                 GUARD_CUDACALL2(cudaDeviceEnablePeerAccess(j, 0), "cudaDeviceEnablePeerAccess", __LINE__);
@@ -151,13 +152,13 @@ int main(int argc, char *argv[])
 				cudaEventRecord(kernelEvent[i], streams[tid]);
 			}
         		kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, num_1_d);
-        		//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);	
+        		cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);	
                 } else {
 			cudaSetDevice(tid);
 			cudaStreamWaitEvent(streams[tid], kernelEvent[tid-1],0);
-                	//cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
+                	cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
                 	kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, nums_d[tid-1]);
-                	//cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                	cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                 }
                 cudaStreamSynchronize(streams[tid]);
         }

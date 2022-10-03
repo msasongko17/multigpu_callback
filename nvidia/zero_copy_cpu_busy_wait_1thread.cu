@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 			free(deviceProp);
 			return -1;
 		}
-
+		cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync);
 		for(int j = 0; j < ngpus; j++) {
 			if(i != j) {
 				GUARD_CUDACALL2(cudaDeviceEnablePeerAccess(j, 0), "cudaDeviceEnablePeerAccess", __LINE__);
@@ -152,19 +152,20 @@ int main(int argc, char *argv[])
 	cudaSetDevice(0);
 	clock_gettime(CLOCK_MONOTONIC, &start); 
 	kernelAdd<<<1, 1, 0, streams[0]>>>(2, num_d, num_1_d, ngpus, *cpu_flag_pointer);
-	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
+	cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
 	//cudaEventRecord(kernelEvent[0], streams[0]);
 
 	while(*cpu_flag == 0);
 	if(ngpus > 1) {
 		for(int i = 1; i < ngpus; i++) {
 			cudaSetDevice(i);
-			//cudaMemcpyAsync(nums_d[i-1], nums[i-1], sizeof(int), cudaMemcpyHostToDevice, streams[i]);
+			cudaMemcpyAsync(nums_d[i-1], nums[i-1], sizeof(int), cudaMemcpyHostToDevice, streams[i]);
 			kernelMult<<<1, 1, 0, streams[i]>>>(num_d, nums_d[i-1]);
-			//cudaMemcpyAsync(nums[i-1], nums_d[i-1], sizeof(int), cudaMemcpyDeviceToHost, streams[i]);
+			cudaMemcpyAsync(nums[i-1], nums_d[i-1], sizeof(int), cudaMemcpyDeviceToHost, streams[i]);
 		}
 	}
 	for(int i = 0; i < ngpus; i++) {
+		cudaSetDevice(i);
 		cudaStreamSynchronize(streams[i]);
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
@@ -179,14 +180,13 @@ int main(int argc, char *argv[])
 		cudaStreamDestroy(streams[i]);
 	}
 
-	cudaSetDevice(0);
-
 	for(int i = 0; i < ngpus - 1; i++) {
 		cudaSetDevice(i+1);
 		cudaFreeHost(nums[i]);
 		cudaFree(nums_d[i]);
 	}
 
+	cudaSetDevice(0);
 	free(nums);
 	free(nums_d);
 
