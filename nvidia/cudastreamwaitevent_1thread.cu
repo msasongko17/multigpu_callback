@@ -38,14 +38,14 @@ cudaError_t err;
 	__global__
 void kernelAdd(int inc, volatile int * num)
 {
-#if 0
+//#if 0
 	clock_t start_clock = clock();
 	clock_t clock_offset = 0;
-	while (clock_offset < 40000)
+	while (clock_offset < 40000000)
 	{
 		clock_offset = clock() - start_clock;
 	}
-#endif
+//#endif
 	*num += inc;
 }
 
