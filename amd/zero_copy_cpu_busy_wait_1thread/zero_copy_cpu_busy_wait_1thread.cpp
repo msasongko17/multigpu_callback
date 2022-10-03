@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	hipSetDevice(0);
 	int * cpu_flag;
 	//hipHostAlloc((void **)&cpu_flag, sizeof(int), hipHostMallocMapped);	
-	hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocDefault );
+	hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocMapped );
 
 	int * num_h;
 	hipHostMalloc(&num_h, sizeof(int), hipHostMallocDefault);

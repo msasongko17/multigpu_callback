@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	hipSetDevice(0);
 	int * cpu_flag;
 	//hipHostAlloc((void **)&cpu_flag, sizeof(int), hipHostMallocMapped);	
-	hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocDefault );
+	hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocMapped );
 
 	int * num_h;
 	hipHostMalloc(&num_h, sizeof(int), hipHostMallocDefault);
@@ -172,8 +172,10 @@ int main(int argc, char *argv[])
 	#pragma omp parallel num_threads(nthreads)
         {
                 int tid = omp_get_thread_num();
+//#if 0
                 if(tid == 0) {
                         clock_gettime(CLOCK_MONOTONIC, &start);
+			//fprintf(stderr, "before kernel launch in thread %d\n", tid);
                         hipLaunchKernelGGL(kernelAdd, dim3(1), dim3(1), 0, streams[tid], 2, num_d, num_1_d, nthreads, cpu_flag_pointer);
                         //hipMemcpyAsync(num_1, num_1_d, sizeof(int), hipMemcpyDeviceToHost, streams[tid]);
                         //hipEventRecord(kernelEvent[0], streams[0]);
@@ -193,6 +195,7 @@ int main(int argc, char *argv[])
                         //hipMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), hipMemcpyDeviceToHost, streams[tid]);
                 }
                 hipStreamSynchronize(streams[tid]);
+//#endif
         }
 	//cout << "chk 6\n";
 //#endif

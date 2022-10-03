@@ -54,17 +54,10 @@ void kernel1(clock_t clock_count, int stream)
 	__global__
 void kernelAdd(int inc, int * num, int * mult, int nthreads, volatile int * cpu_flag_pointer)
 {
-#if 0
-	clock_t start_clock = clock();
-	clock_t clock_offset = 0;
-	while (clock_offset < 40000)
-	{
-		clock_offset = clock() - start_clock;
-	}
-#endif
-	//*num += inc;
-	*cpu_flag_pointer = 1;
-	//*mult *= *num; 
+//#if 0
+	for(int i = 0; i < nthreads - 1; i++)
+                cpu_flag_pointer[i] = 1;	
+//#endif
 }
 
 	__global__
@@ -134,7 +127,12 @@ int main(int argc, char *argv[])
 	hipSetDevice(0);
 	int * cpu_flag;
 	//hipHostAlloc((void **)&cpu_flag, sizeof(int), hipHostMallocMapped);	
-	hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocDefault );
+	//hipHostMalloc((void**)&cpu_flag, sizeof(uint32_t), hipHostMallocDefault );
+	hipHostMalloc((void **)&cpu_flag, (nthreads - 1) * sizeof(int), hipHostMallocMapped);
+
+	for(int i = 0; i < nthreads - 1; i++) {
+                cpu_flag[i] = 0;
+        }	
 
 	int * num_h;
 	hipHostMalloc(&num_h, sizeof(int), hipHostMallocDefault);
@@ -149,8 +147,7 @@ int main(int argc, char *argv[])
 	int ** nums = (int **) malloc ((nthreads - 1) * sizeof(int*));
 	int ** nums_d = (int **) malloc ((nthreads - 1) * sizeof(int*));
 
-	int *cpu_flag_pointer; //= (int **) malloc (sizeof(int *));
-	*cpu_flag = 0;	
+	int *cpu_flag_pointer; //= (int **) malloc (sizeof(int *));	
 
 	//cout << "chk 4\n";
 	//hipSetDevice(0);
@@ -181,7 +178,13 @@ int main(int argc, char *argv[])
                 } else {
                         hipSetDevice(tid);
                         //fprintf(stderr, "before while in thread %d\n", tid);
-                        while(cpu_flag[tid - 1] == 0);
+                        //while(cpu_flag[tid - 1] == 0);
+			uint32_t temp = 0;
+        		while(temp == 0) {
+                		asm volatile("mov %1, %0\n\t"
+                 		: "=r" (temp)
+                 		: "m" (cpu_flag[tid - 1]));
+        		}	
                         //fprintf(stderr, "after while in thread %d\n", tid);
                         //hipMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), hipMemcpyHostToDevice, streams[tid]);
                         hipLaunchKernelGGL(kernelMult, dim3(1), dim3(1), 0, streams[tid], num_d, nums_d[tid-1]);
