@@ -7,10 +7,10 @@ HIPCC=$(HIP_PATH)/bin/hipcc
 
 TARGET=hcc
 
-SOURCES = zero_copy_cpu_busy_wait_1thread.cpp
+SOURCES = zero_copy_cpu_busy_wait_nthreads.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
-EXECUTABLE=./zero_copy_cpu_busy_wait_1thread
+EXECUTABLE=./zero_copy_cpu_busy_wait_nthreads
 
 .PHONY: test
 
