@@ -49,23 +49,23 @@ void kernel1(clock_t clock_count, int stream)
         __global__
 void kernelAdd(int inc, int * num, int * mult, int nthreads, int * cpu_flag_pointer)
 {
-//#if 0
+#if 0
         clock_t start_clock = clock();
         clock_t clock_offset = 0;
         while (clock_offset < 40000000)
         {
                 clock_offset = clock() - start_clock;
         }
-//#endif
-        *num += inc;
+#endif
+        //*num += inc;
 	*cpu_flag_pointer = 1;
-        *mult *= *num; 
+        //*mult *= *num; 
 }
 
         __global__
 void kernelMult(int * mult, int * num)
 {
-        *num *= *mult;
+        //*num *= *mult;
 }
 
 int main(int argc, char *argv[])
@@ -157,16 +157,16 @@ int main(int argc, char *argv[])
                 if(tid == 0) {
 			clock_gettime(CLOCK_MONOTONIC, &start);
                         kernelAdd<<<1, 1, 0, streams[tid]>>>(2, num_d, num_1_d, nthreads, *cpu_flag_pointer);
-                        cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        //cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                         //cudaEventRecord(kernelEvent[0], streams[0]);
                 } else {
                         //fprintf(stderr, "before while in thread %d\n", tid);
 			cudaSetDevice(tid);
                         while(*cpu_flag == 0);
                         //fprintf(stderr, "after while in thread %d\n", tid);
-                        cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
+                        //cudaMemcpyAsync(nums_d[tid-1], nums[tid-1], sizeof(int), cudaMemcpyHostToDevice, streams[tid]);
                         kernelMult<<<1, 1, 0, streams[tid]>>>(num_d, nums_d[tid-1]);
-                        cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
+                        //cudaMemcpyAsync(nums[tid-1], nums_d[tid-1], sizeof(int), cudaMemcpyDeviceToHost, streams[tid]);
                 }
                 cudaStreamSynchronize(streams[tid]);
         }

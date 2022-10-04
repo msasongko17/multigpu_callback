@@ -49,23 +49,23 @@ void kernel1(clock_t clock_count, int stream)
 	__global__
 void kernelAdd(int inc, int * num, int * mult, int ngpus, int * cpu_flag_pointer)
 {
-//#if 0
+#if 0
 	clock_t start_clock = clock();
 	clock_t clock_offset = 0;
 	while (clock_offset < 40000000)
 	{
 		clock_offset = clock() - start_clock;
 	}
-//#endif
-	*num += inc;
+#endif
+	//*num += inc;
 	*cpu_flag_pointer = 1;
-	*mult *= *num; 
+	//*mult *= *num; 
 }
 
 	__global__
 void kernelMult(int * mult, int * num)
 {
-	*num *= *mult;
+	//*num *= *mult;
 }
 
 int main(int argc, char *argv[])
@@ -152,16 +152,16 @@ int main(int argc, char *argv[])
 	cudaSetDevice(0);
 	clock_gettime(CLOCK_MONOTONIC, &start); 
 	kernelAdd<<<1, 1, 0, streams[0]>>>(2, num_d, num_1_d, ngpus, *cpu_flag_pointer);
-	cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
+	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
 	//cudaEventRecord(kernelEvent[0], streams[0]);
 
 	while(*cpu_flag == 0);
 	if(ngpus > 1) {
 		for(int i = 1; i < ngpus; i++) {
 			cudaSetDevice(i);
-			cudaMemcpyAsync(nums_d[i-1], nums[i-1], sizeof(int), cudaMemcpyHostToDevice, streams[i]);
+			//cudaMemcpyAsync(nums_d[i-1], nums[i-1], sizeof(int), cudaMemcpyHostToDevice, streams[i]);
 			kernelMult<<<1, 1, 0, streams[i]>>>(num_d, nums_d[i-1]);
-			cudaMemcpyAsync(nums[i-1], nums_d[i-1], sizeof(int), cudaMemcpyDeviceToHost, streams[i]);
+			//cudaMemcpyAsync(nums[i-1], nums_d[i-1], sizeof(int), cudaMemcpyDeviceToHost, streams[i]);
 		}
 	}
 	for(int i = 0; i < ngpus; i++) {
