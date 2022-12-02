@@ -120,8 +120,12 @@ int main(int argc, char *argv[])
 	int * num_1_d;
 	cudaMalloc(&num_1_d, sizeof(int));
 
-	int ** nums = (int **) malloc ((ngpus - 1) * sizeof(int*));
-	int ** nums_d = (int **) malloc ((ngpus - 1) * sizeof(int*));
+	int ** nums;
+        int ** nums_d;
+        if(ngpus > 1) {
+                nums = (int **) malloc ((ngpus - 1) * sizeof(int*));
+                nums_d = (int **) malloc ((ngpus - 1) * sizeof(int*));
+        }	
 
 	//cudaSetDevice(0);
 	cudaMalloc(&num_d, sizeof(int));
