@@ -82,13 +82,13 @@ __global__ void receive_interrupt(uint64_t gpu_id)
 void kernel_launch(uint32_t target_gpu) {
         hipSetDevice(target_gpu);
 	//cout << "receive_interrupt will be called\n";
-//#if 0
+#if 0
 	hipLaunchKernelGGL(receive_interrupt,
                   dim3(1),
                   dim3(1),
                   0, streams[target_gpu],
                   target_gpu);	
-//#endif
+#endif
 	//cout << "receive_interrupt is called\n";
         hipStreamSynchronize(streams[target_gpu]);
 	clock_gettime(CLOCK_MONOTONIC, &end_time); /* mark the end time */
@@ -97,13 +97,36 @@ void kernel_launch(uint32_t target_gpu) {
 	hipStreamDestroy(streams[target_gpu]);
 }
 
+#if 0
 void sig_event_handler(int n, siginfo_t *info, void *unused)
 {
         if (n == SIGNEW) {
 		ptr[0] = 0;
 		//cout << "sig_event_handler is called 1\n";
-                kernel_launch(1);
+		for (int i = 0; i < ngpus; i++)
+                	kernel_launch(i);
 		//cout << "sig_event_handler is called 2\n";
+        }
+}
+#endif
+
+void sig_event_handler(int n, siginfo_t *info, void *unused)
+{
+        if (n == SIGNEW) {
+                ptr[0] = 0;
+                //cout << "sig_event_handler is called 1\n";
+		for(int i = 0; i < ngpus; i++) {
+                	hipSetDevice(i);
+                	hipStreamSynchronize(streams[i]);
+        	}
+		clock_gettime(CLOCK_MONOTONIC, &end_time); /* mark the end time */
+        	diff_time = BILLION * (end_time.tv_sec - start_time.tv_sec) + end_time.tv_nsec - start_time.tv_nsec;
+        	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff_time);
+		for(int i = 0; i < ngpus; i++) {
+                        hipSetDevice(i);
+                        hipStreamDestroy(streams[i]);
+                }
+                //cout << "sig_event_handler is called 2\n";
         }
 }
 
@@ -127,6 +150,17 @@ __global__ void send_interrupt(volatile uint64_t* array1, uint32_t size)
 
 int main(int argc, char* argv[])
 {
+// before
+	if(argc != 2) {
+                fprintf(stderr, "usage: ./bench <thread-count>\n");
+                return -1;
+        }
+        ngpus = atoi(argv[1]);
+        if(ngpus <= 0) {
+                fprintf(stderr, "GPU count is supposed to be a nonzero integer\n");
+                return -1;
+        }	
+//after
 	int fd1;
 	fd1 = open("/dev/kfd", O_RDWR);
 
@@ -140,7 +174,14 @@ int main(int argc, char* argv[])
 	cout << " System major " << devProp.major << endl;
 	cout << " agent prop name " << devProp.name << endl;	
 
-	hipGetDeviceCount (&ngpus);
+	int num_gpus = 0;
+	hipGetDeviceCount (&num_gpus);
+
+	if(ngpus > num_gpus) {
+                fprintf(stderr, "GPU count cannot be higher than the number of available GPUs.\n");
+                return -1;
+        }
+
 	streams = (hipStream_t *) malloc(ngpus * sizeof(hipStream_t)); 
 
 	struct sigaction act;
