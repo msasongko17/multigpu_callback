@@ -3,7 +3,7 @@
 #SBATCH -J callback 		 # Job Name
 #SBATCH -N 1 				 # Number of Nodes
 #SBATCH -n 1 				 # Number of tasks per Node
-#SBATCH -c 8                             # Number of cores per Node
+#SBATCH -c 4                             # Number of cores per Node
 #SBATCH --gres=gpu:8 		 # GPU resources (can request specific as gpu:tesla_v100:1)
 #SBATCH --time=00:10:00		 # Time day-hours:minutes:seconds
 #SBATCH --output=callback.out	 # Standard output and error log to this file
