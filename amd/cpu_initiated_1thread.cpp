@@ -48,16 +48,13 @@ void kernel1(clock_t clock_count, int stream)
 }
 
 	__global__
-void kernelAdd(int * cpu_flag_pointer)
+void kernelAdd()
 {
-	*cpu_flag_pointer = 1;
-	//*mult *= *num; 
 }
 
 	__global__
 void kernelMult()
 {
-	//*num *= *mult;
 }
 
 int main(int argc, char *argv[])
@@ -109,24 +106,14 @@ int main(int argc, char *argv[])
 
 
 	GUARD_CUDACALL2(hipSetDevice(0), "hipSetDevice", __LINE__);
-	int * cpu_flag;
-	hipHostMalloc((void **)&cpu_flag, sizeof(int), hipHostMallocMapped);	
 
-	int **cpu_flag_pointer = (int **) malloc (sizeof(int *));
-	*cpu_flag = 0;	
-
-	hipHostGetDevicePointer((void **)cpu_flag_pointer, (void *)cpu_flag, 0);
+	hipSetDevice(0);
 	clock_gettime(CLOCK_MONOTONIC, &start); 
-	hipLaunchKernelGGL(kernelAdd, dim3(1), dim3(1), 0, streams[0], *cpu_flag_pointer);
-	//hipMemcpyAsync(num_1, num_1_d, sizeof(int), hipMemcpyDeviceToHost, streams[0]);
-	//hipEventRecord(kernelEvent[0], streams[0]);
+	hipLaunchKernelGGL(kernelAdd, dim3(1), dim3(1), 0, streams[0]);
 
-//#if 0
-	uint32_t temp = 0;
-        while(temp == 0) {
-                asm volatile("mov %1, %0\n\t"
-                 : "=r" (temp)
-                 : "m" (*cpu_flag));
+	for(int i = 0; i < ngpus; i++) {
+                hipSetDevice(i);
+                hipStreamSynchronize(streams[i]);
         }
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
@@ -135,8 +122,6 @@ int main(int argc, char *argv[])
 		hipSetDevice(i);
 		hipStreamDestroy(streams[i]);
 	}
-	free(cpu_flag_pointer);
-
 	free(streams);
 	//free(kernelEvent);
 	return 0;
