@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
 	cudaStream_t *streams = (cudaStream_t *) malloc(nstreams * sizeof(cudaStream_t));
 
 	cudaEvent_t kernelEvent;
-	cudaEvent_t * eventStart = (cudaEvent_t *) malloc(ngpus * sizeof(cudaDeviceProp)); 
-	cudaEvent_t * eventStop = (cudaEvent_t *) malloc(ngpus * sizeof(cudaDeviceProp));
+	cudaEvent_t * eventStart = (cudaEvent_t *) malloc(ngpus * sizeof(cudaEvent_t)); 
+	cudaEvent_t * eventStop = (cudaEvent_t *) malloc(ngpus * sizeof(cudaEvent_t));
 
 	cudaDeviceProp *deviceProp = (cudaDeviceProp *) malloc(ngpus * sizeof(cudaDeviceProp));
 
