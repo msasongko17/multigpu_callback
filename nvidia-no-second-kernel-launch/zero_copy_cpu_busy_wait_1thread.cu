@@ -47,7 +47,7 @@ void kernel1(clock_t clock_count, int stream)
 }
 
 	__global__
-void kernelAdd(int inc, int * num, int * mult, int ngpus, int * cpu_flag_pointer)
+void kernelAdd(int * cpu_flag_pointer)
 {
 #if 0
 	clock_t start_clock = clock();
@@ -120,42 +120,12 @@ int main(int argc, char *argv[])
 	int * cpu_flag;
 	cudaHostAlloc((void **)&cpu_flag, sizeof(int), cudaHostAllocMapped);	
 
-	int * num_h;
-	cudaMallocHost(&num_h, sizeof(int));
-	*num_h = 1;
-	int * num_d;
-	int * num_1;
-	cudaMallocHost(&num_1, sizeof(int));
-	*num_1 = 2;
-	int * num_1_d;
-	cudaMalloc(&num_1_d, sizeof(int));
-
-	int ** nums;
-        int ** nums_d;
-        if(ngpus > 1) {
-                nums = (int **) malloc ((ngpus - 1) * sizeof(int*));
-                nums_d = (int **) malloc ((ngpus - 1) * sizeof(int*));
-        }
-
 	int **cpu_flag_pointer = (int **) malloc (sizeof(int *));
 	*cpu_flag = 0;	
 
-	//cudaSetDevice(0);
-	cudaMalloc(&num_d, sizeof(int));
-	cudaMemcpyAsync(num_d, num_h, sizeof(int), cudaMemcpyHostToDevice, streams[0]);
-	cudaMemcpyAsync(num_1_d, num_1, sizeof(int), cudaMemcpyHostToDevice, streams[0]);
-
 	cudaHostGetDevicePointer((void **)cpu_flag_pointer, (void *)cpu_flag, 0);
-	for(int i = 0; i < ngpus - 1; i++) {
-		cudaSetDevice(i+1);
-		cudaMallocHost(&nums[i], sizeof(int));
-		*nums[i] = 3;
-		cudaMalloc(&nums_d[i], sizeof(int));
-	}
-
-	cudaSetDevice(0);
 	clock_gettime(CLOCK_MONOTONIC, &start); 
-	kernelAdd<<<1, 1, 0, streams[0]>>>(2, num_d, num_1_d, ngpus, *cpu_flag_pointer);
+	kernelAdd<<<1, 1, 0, streams[0]>>>(*cpu_flag_pointer);
 	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
 	//cudaEventRecord(kernelEvent[0], streams[0]);
 
@@ -170,41 +140,21 @@ int main(int argc, char *argv[])
 		}
 	}
 #endif
+#if 0
 	for(int i = 0; i < ngpus; i++) {
 		cudaSetDevice(i);
 		cudaStreamSynchronize(streams[i]);
 	}
+#endif
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
 	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
-	printf("num_1: %d\n", *num_1);
-	for(int i = 0; i < ngpus - 1; i++)
-		printf("num_%d: %d\n", i+2, *nums[i]);
-
 	for(int i = 0; i < ngpus; i++) {
 		cudaSetDevice(i);
 		cudaStreamDestroy(streams[i]);
 	}
 
-	for(int i = 0; i < ngpus - 1; i++) {
-		cudaSetDevice(i+1);
-		cudaFreeHost(nums[i]);
-		cudaFree(nums_d[i]);
-	}
-
 	cudaSetDevice(0);
-	if (ngpus > 1) {
-		free(nums);
-		free(nums_d);
-	}
-
-	cudaFreeHost(num_h);
-	//cudaFreeHost(cpu_flag);
-	free(cpu_flag_pointer);
-	cudaFree(num_d);
-
-	cudaFreeHost(num_1);
-	cudaFree(num_1_d);
 
 	free(streams);
 	//free(kernelEvent);
