@@ -114,11 +114,6 @@ void sig_event_handler(int n, siginfo_t *info, void *unused)
 {
         if (n == SIGNEW) {
                 ptr[0] = 0;
-                //cout << "sig_event_handler is called 1\n";
-		for(int i = 0; i < ngpus; i++) {
-                	hipSetDevice(i);
-                	hipStreamSynchronize(streams[i]);
-        	}
 		clock_gettime(CLOCK_MONOTONIC, &end_time); /* mark the end time */
         	diff_time = BILLION * (end_time.tv_sec - start_time.tv_sec) + end_time.tv_nsec - start_time.tv_nsec;
         	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff_time);
@@ -130,7 +125,7 @@ void sig_event_handler(int n, siginfo_t *info, void *unused)
         }
 }
 
-__global__ void send_interrupt(volatile uint64_t* array1, uint32_t size)
+__global__ void send_interrupt(volatile uint64_t* array1)
 {
 #if 0
 	array1[0] = 1;
@@ -225,7 +220,7 @@ int main(int argc, char* argv[])
                   dim3(1),
                   dim3(1),
                   0, streams[0],
-		  dev_ptr, size);
+		  dev_ptr);
 
 	//for(int i = 0; i < ngpus; i++) {
 		
