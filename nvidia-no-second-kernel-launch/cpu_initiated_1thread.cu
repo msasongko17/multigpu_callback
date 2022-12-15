@@ -56,6 +56,8 @@ void kernelMult()
 {
 }
 
+__global__ void EmptyKernel() { }
+
 int main(int argc, char *argv[])
 {
 	if(argc != 2) {
@@ -68,7 +70,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	uint64_t diff;
-	struct timespec start, end;
+	struct timespec start, start1, end;
 
 	int num_gpus = 0;
 
@@ -102,12 +104,16 @@ int main(int argc, char *argv[])
 
 		GUARD_CUDACALL2(cudaStreamCreate(&(streams[i])), "cudaStreamCreate", __LINE__);
 	}
-
-
+	const int N = 1000;
+	//for(int i = 0; i < ngpus; i++) {
 	GUARD_CUDACALL2(cudaSetDevice(0), "cudaSetDevice", __LINE__);
+	for (int i=0; i<N; i++) {
+		kernelAdd<<<1, 1, 0, streams[0]>>>();
+	}
 
 	clock_gettime(CLOCK_MONOTONIC, &start); 
 	kernelAdd<<<1, 1, 0, streams[0]>>>();
+	//clock_gettime(CLOCK_MONOTONIC, &start1);
 	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
 	//cudaEventRecord(kernelEvent[0], streams[0]);
 
@@ -133,8 +139,12 @@ int main(int argc, char *argv[])
 	}
 #endif
 	clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
+	diff = BILLION * (start1.tv_sec - start.tv_sec) + start1.tv_nsec - start.tv_nsec;
+        printf("kernel launch time = %llu nanoseconds\n", (long long unsigned int) diff);
+	diff = BILLION * (end.tv_sec - start1.tv_sec) + end.tv_nsec - start1.tv_nsec;
+        printf("synchronization time = %llu nanoseconds\n", (long long unsigned int) diff);
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-	printf("elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
+        printf("total elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
 	for(int i = 0; i < ngpus; i++) {
 		cudaSetDevice(i);
 		cudaStreamDestroy(streams[i]);
