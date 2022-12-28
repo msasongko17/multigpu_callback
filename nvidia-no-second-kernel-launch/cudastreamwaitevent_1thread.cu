@@ -144,19 +144,19 @@ int main(int argc, char *argv[])
 	}
 	cudaSetDevice(0);
 	//cudaEventRecord(launch_begin, streams[0]);
-	//clock_gettime(CLOCK_MONOTONIC, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	kernelAdd<<<1, 1, 0, streams[0]>>>();
-	//clock_gettime(CLOCK_MONOTONIC, &end);
+	clock_gettime(CLOCK_MONOTONIC, &end);
 	//cudaEventRecord(launch_end, streams[0]);
 	cudaEventRecord(kernelEvent, streams[0]);
 	//kernelMult<<<1, 1, 0, streams[0]>>>(num_d, num_1_d);
 	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
-#if 0
+//#if 0
 	for(int i = 0; i < ngpus; i++) {
                 cudaSetDevice(i);
                 cudaEventRecord(eventStart1[i], streams[i+1]);
 	}
-#endif
+//#endif
 	for(int i = 0; i < ngpus; i++) {	
 		cudaSetDevice(i);
 		cudaStreamWaitEvent(streams[i+1], kernelEvent,0);

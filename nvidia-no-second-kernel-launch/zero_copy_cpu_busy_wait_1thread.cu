@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
 	clock_gettime(CLOCK_MONOTONIC, &start); 
 	kernelAdd<<<1, 1, 0, streams[0]>>>(*cpu_flag_pointer);
-	//clock_gettime(CLOCK_MONOTONIC, &start1);
+	clock_gettime(CLOCK_MONOTONIC, &start1);
 	//cudaMemcpyAsync(num_1, num_1_d, sizeof(int), cudaMemcpyDeviceToHost, streams[0]);
 	//cudaEventRecord(kernelEvent[0], streams[0]);
 
