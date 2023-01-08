@@ -111,6 +111,8 @@ int main(int argc, char *argv[])
 		kernelAdd<<<1, 1, 0, streams[0]>>>();
 	}
 
+#pragma omp parallel
+	{
 	clock_gettime(CLOCK_MONOTONIC, &start); 
 	kernelAdd<<<1, 1, 0, streams[0]>>>();
 	clock_gettime(CLOCK_MONOTONIC, &start1);
@@ -145,6 +147,7 @@ int main(int argc, char *argv[])
         printf("synchronization time = %llu nanoseconds\n", (long long unsigned int) diff);
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
         printf("total elapsed time = %llu nanoseconds\n", (long long unsigned int) diff);
+	}
 	for(int i = 0; i < ngpus; i++) {
 		cudaSetDevice(i);
 		cudaStreamDestroy(streams[i]);

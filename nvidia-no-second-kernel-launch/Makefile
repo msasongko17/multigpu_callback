@@ -1,11 +1,11 @@
 install:
 	nvcc zero_copy_cpu_busy_wait_nthreads.cu -o zero_copy_cpu_busy_wait_nthreads -Xcompiler -fopenmp
 	nvcc zero_copy_cpu_busy_wait_nthreads_1flag.cu -o zero_copy_cpu_busy_wait_nthreads_1flag -Xcompiler -fopenmp
-	nvcc zero_copy_cpu_busy_wait_1thread.cu -o zero_copy_cpu_busy_wait_1thread
+	nvcc zero_copy_cpu_busy_wait_1thread.cu -o zero_copy_cpu_busy_wait_1thread -Xcompiler -fopenmp
 	nvcc cudastreamwaitevent_nthreads.cu -o cudastreamwaitevent_nthreads -Xcompiler -fopenmp
 	nvcc cudastreamwaitevent_nthreads_1flag.cu -o cudastreamwaitevent_nthreads_1flag -Xcompiler -fopenmp
-	nvcc cudastreamwaitevent_1thread.cu -o cudastreamwaitevent_1thread
-	nvcc cpu_initiated_1thread.cu -o cpu_initiated_1thread
+	nvcc cudastreamwaitevent_1thread.cu -o cudastreamwaitevent_1thread -Xcompiler -fopenmp
+	nvcc cpu_initiated_1thread.cu -o cpu_initiated_1thread -Xcompiler -fopenmp
 
 run:
 	GOMP_CPU_AFFINITY="0 1 2 3" ./cpu_initiated_1thread 2  2>&1 | tee cpu_initiated_1_threads_2_gpus_log && GOMP_CPU_AFFINITY="0 1 2 3" ./zero_copy_cpu_busy_wait_nthreads 3  2>&1 | tee 3_threads_3_flags_log && GOMP_CPU_AFFINITY="0 1 2 3" ./zero_copy_cpu_busy_wait_nthreads 4  2>&1 | tee 4_threads_4_flags_log
@@ -44,5 +44,5 @@ result3:
 scalability:	install run result1 run2 result2 run3 result3
 
 clean: 
-	rm zero_copy_cpu_busy_wait_nthreads zero_copy_cpu_busy_wait_nthreads_1flag zero_copy_cpu_busy_wait_1thread cudastreamwaitevent_nthreads cudastreamwaitevent_nthreads_1flag cudastreamwaitevent_1thread
+	rm zero_copy_cpu_busy_wait_nthreads zero_copy_cpu_busy_wait_nthreads_1flag zero_copy_cpu_busy_wait_1thread cudastreamwaitevent_nthreads cudastreamwaitevent_nthreads_1flag cudastreamwaitevent_1thread cpu_initiated_1thread
 
