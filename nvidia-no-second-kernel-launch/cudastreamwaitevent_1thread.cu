@@ -138,8 +138,6 @@ int main(int argc, char *argv[])
         	kernelAdd<<<1, 1, 0, streams[0]>>>();
     	}
 	//clock_gettime(CLOCK_MONOTONIC, &start);       /* mark start time */
-#pragma omp parallel
-	{
 	for(int i = 0; i < ngpus; i++) {
 		cudaSetDevice(i);
 		cudaEventRecord(eventStart[i], streams[i+1]);
@@ -195,7 +193,6 @@ int main(int argc, char *argv[])
 	//clock_gettime(CLOCK_MONOTONIC, &end); /* mark the end time */
 	diff = BILLION * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
 	printf("cpu kernel launch time = %llu nanoseconds\n", (long long unsigned int) diff);
-	}
 #if 0
 	printf("num_1: %d\n", *num_1);
 	for(int i = 0; i < ngpus - 1; i++)
